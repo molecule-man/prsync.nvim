@@ -9,7 +9,7 @@ local M = {}
 ---Start a PR review session
 ---Pick PR, create/attach worktree, open review tab
 function M.start()
-  local prs, err = cli.run("prs", { "-format", "json", "-q" })
+  local prs, err = cli.run("prs", { "-format", "json" }, { "-q" })
   if err then
     vim.notify("prsync: " .. err, vim.log.levels.ERROR)
     return
@@ -25,7 +25,7 @@ function M.start()
       return
     end
 
-    local result, start_err = cli.run("start", { "-pr", pr.number, "-format", "json", "-q" })
+    local result, start_err = cli.run("start", { "-format", "json" }, { "-q", "-pr", pr.number })
     if start_err then
       vim.notify("prsync: " .. start_err, vim.log.levels.ERROR)
       return

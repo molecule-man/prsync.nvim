@@ -4,14 +4,20 @@ local M = {}
 
 ---Run a prsync command synchronously
 ---@param cmd string Command name (e.g., "start", "approve", "prs")
----@param args table? Additional arguments
+---@param args table? Command-specific arguments
+---@param global_args table? Global flags placed before the command
 ---@return table|nil result Parsed JSON result or nil on error
 ---@return string|nil error Error message or nil on success
-function M.run(cmd, args)
+function M.run(cmd, args, global_args)
   local config = require("prsync.config")
   args = args or {}
+  global_args = global_args or {}
 
-  local cmd_parts = { config.options.cli_path, "-yes", cmd }
+  local cmd_parts = { config.options.cli_path, "-yes" }
+  for _, arg in ipairs(global_args) do
+    table.insert(cmd_parts, tostring(arg))
+  end
+  table.insert(cmd_parts, cmd)
   for _, arg in ipairs(args) do
     table.insert(cmd_parts, tostring(arg))
   end
