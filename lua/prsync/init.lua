@@ -8,6 +8,8 @@ function M.setup(opts)
   local commands = require("prsync.commands")
   vim.api.nvim_create_user_command("PrsyncStart", commands.start, {})
   vim.api.nvim_create_user_command("PrsyncApprove", commands.approve, {})
+
+  require("prsync.highlight").setup_autocmds()
 end
 
 return M

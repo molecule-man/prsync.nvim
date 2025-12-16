@@ -22,12 +22,15 @@ function M.run(cmd, args, global_args)
     table.insert(cmd_parts, tostring(arg))
   end
 
-  local cmd_str = table.concat(cmd_parts, " ")
-  local output = vim.fn.system(cmd_str)
-  local exit_code = vim.v.shell_error
+  local result = vim.system(cmd_parts, { text = true }):wait()
+  local output = result.stdout or ""
+  local exit_code = result.code
 
   if exit_code ~= 0 then
-    local err_msg = output:gsub("^%s*(.-)%s*$", "%1")
+    local err_msg = (result.stderr or ""):gsub("^%s*(.-)%s*$", "%1")
+    if err_msg == "" then
+      err_msg = output:gsub("^%s*(.-)%s*$", "%1")
+    end
     if err_msg == "" then
       err_msg = "command failed with exit code " .. exit_code
     end
