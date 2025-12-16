@@ -49,4 +49,42 @@ function M.run(cmd, args, global_args)
   return output, nil
 end
 
+---Run a prsync command with stdin input
+---@param cmd string Command name
+---@param stdin_content string Content to pass via stdin
+---@param args table? Command-specific arguments
+---@param global_args table? Global flags placed before the command
+---@return string|nil result Output or nil on error
+---@return string|nil error Error message or nil on success
+function M.run_with_stdin(cmd, stdin_content, args, global_args)
+  local config = require("prsync.config")
+  args = args or {}
+  global_args = global_args or {}
+
+  local cmd_parts = { config.options.cli_path, "-yes" }
+  for _, arg in ipairs(global_args) do
+    table.insert(cmd_parts, tostring(arg))
+  end
+  table.insert(cmd_parts, cmd)
+  for _, arg in ipairs(args) do
+    table.insert(cmd_parts, tostring(arg))
+  end
+
+  local result = vim.system(cmd_parts, { text = true, stdin = stdin_content }):wait()
+  local output = result.stdout or ""
+
+  if result.code ~= 0 then
+    local err_msg = (result.stderr or ""):gsub("^%s*(.-)%s*$", "%1")
+    if err_msg == "" then
+      err_msg = output:gsub("^%s*(.-)%s*$", "%1")
+    end
+    if err_msg == "" then
+      err_msg = "command failed with exit code " .. result.code
+    end
+    return nil, err_msg
+  end
+
+  return output, nil
+end
+
 return M

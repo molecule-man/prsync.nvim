@@ -6,7 +6,9 @@ M.ns = vim.api.nvim_create_namespace("prsync_comments")
 
 local cached_is_worktree = nil
 
-local function is_prsync_worktree()
+---Check if current directory is a prsync worktree
+---@return boolean
+function M.is_prsync_worktree()
   if cached_is_worktree ~= nil then
     return cached_is_worktree
   end
@@ -32,7 +34,7 @@ end
 local function apply_highlights(bufnr)
   clear_highlights(bufnr)
 
-  if not is_prsync_worktree() then
+  if not M.is_prsync_worktree() then
     return
   end
 
