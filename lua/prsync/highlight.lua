@@ -39,7 +39,7 @@ local function apply_highlights(bufnr)
   end
 
   local draft = get_draft()
-  if not draft or not draft.files then
+  if not draft or type(draft.files) ~= "table" then
     return
   end
 
