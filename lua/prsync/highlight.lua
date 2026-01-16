@@ -18,13 +18,15 @@ function M.is_prsync_worktree()
   return cached_is_worktree
 end
 
-local function get_draft()
+local function get_draft_async(callback)
   local cli = require("prsync.cli")
-  local result, err = cli.run("comment", { "-dry-run", "-format", "json" }, { "-q" })
-  if err then
-    return nil
-  end
-  return result
+  cli.run_async("comment", { "-dry-run", "-format", "json" }, { "-q" }, function(result, err)
+    if err then
+      callback(nil)
+      return
+    end
+    callback(result)
+  end)
 end
 
 local function clear_highlights(bufnr)
@@ -38,48 +40,54 @@ local function apply_highlights(bufnr)
     return
   end
 
-  local draft = get_draft()
-  if not draft or type(draft.files) ~= "table" then
-    return
-  end
-
-  local bufname = vim.api.nvim_buf_get_name(bufnr)
-  local cwd = vim.fn.getcwd()
-  local rel_path = bufname:sub(#cwd + 2) -- strip cwd/ prefix
-
-  for _, file in ipairs(draft.files) do
-    if file.path == rel_path then
-      for _, comment in ipairs(file.comments or {}) do
-        -- Skip suggestions (only highlight pure comments)
-        if comment.suggestion and comment.suggestion ~= "" then
-          goto continue
-        end
-
-        -- Highlight anchor lines (yellowish)
-        if comment.anchor_start and comment.anchor_end then
-          for line = comment.anchor_start, comment.anchor_end do
-            pcall(vim.api.nvim_buf_set_extmark, bufnr, M.ns, line - 1, 0, {
-              line_hl_group = "PrsyncAnchor",
-              hl_eol = true,
-            })
-          end
-        end
-
-        -- Highlight comment lines (greenish)
-        if comment.content_start and comment.content_end then
-          for line = comment.content_start, comment.content_end do
-            pcall(vim.api.nvim_buf_set_extmark, bufnr, M.ns, line - 1, 0, {
-              line_hl_group = "PrsyncComment",
-              hl_eol = true,
-            })
-          end
-        end
-
-        ::continue::
-      end
-      break
+  get_draft_async(function(draft)
+    -- Buffer may have been closed while waiting for async response
+    if not vim.api.nvim_buf_is_valid(bufnr) then
+      return
     end
-  end
+
+    if not draft or type(draft.files) ~= "table" then
+      return
+    end
+
+    local bufname = vim.api.nvim_buf_get_name(bufnr)
+    local cwd = vim.fn.getcwd()
+    local rel_path = bufname:sub(#cwd + 2) -- strip cwd/ prefix
+
+    for _, file in ipairs(draft.files) do
+      if file.path == rel_path then
+        for _, comment in ipairs(file.comments or {}) do
+          -- Skip suggestions (only highlight pure comments)
+          if comment.suggestion and comment.suggestion ~= "" then
+            goto continue
+          end
+
+          -- Highlight anchor lines (yellowish)
+          if comment.anchor_start and comment.anchor_end then
+            for line = comment.anchor_start, comment.anchor_end do
+              pcall(vim.api.nvim_buf_set_extmark, bufnr, M.ns, line - 1, 0, {
+                line_hl_group = "PrsyncAnchor",
+                hl_eol = true,
+              })
+            end
+          end
+
+          -- Highlight comment lines (greenish)
+          if comment.content_start and comment.content_end then
+            for line = comment.content_start, comment.content_end do
+              pcall(vim.api.nvim_buf_set_extmark, bufnr, M.ns, line - 1, 0, {
+                line_hl_group = "PrsyncComment",
+                hl_eol = true,
+              })
+            end
+          end
+
+          ::continue::
+        end
+        break
+      end
+    end
+  end)
 end
 
 function M.setup_autocmds()
