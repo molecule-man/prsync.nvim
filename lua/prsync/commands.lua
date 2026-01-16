@@ -158,4 +158,41 @@ function M.reject()
   review_action("reject")
 end
 
+---Enable or disable local review mode
+---@param opts table Command options with args field
+function M.local_review(opts)
+  local base = opts.args
+  if base == "" or base == "off" then
+    highlight.clear_local_review()
+    vim.notify("Local review disabled", vim.log.levels.INFO)
+    return
+  end
+  highlight.set_local_review(base)
+  vim.notify("Local review: " .. base, vim.log.levels.INFO)
+end
+
+---Export review to markdown buffer
+function M.export()
+  local args = { "-dry-run", "-format", "md" }
+  local global_args = { "-q" }
+
+  local base = highlight.get_local_review_base()
+  if base then
+    table.insert(global_args, "-base")
+    table.insert(global_args, base)
+  end
+
+  local md, err = cli.run("comment", args, global_args)
+  if err then
+    vim.notify("prsync: " .. err, vim.log.levels.ERROR)
+    return
+  end
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(md, "\n"))
+  vim.api.nvim_set_option_value("filetype", "markdown", { buf = buf })
+  vim.api.nvim_buf_set_name(buf, "prsync://export.md")
+  vim.api.nvim_set_current_buf(buf)
+end
+
 return M

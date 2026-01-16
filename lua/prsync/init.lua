@@ -10,6 +10,8 @@ function M.setup(opts)
   vim.api.nvim_create_user_command("PrsyncApprove", commands.approve, {})
   vim.api.nvim_create_user_command("PrsyncComment", commands.comment, {})
   vim.api.nvim_create_user_command("PrsyncReject", commands.reject, {})
+  vim.api.nvim_create_user_command("PrsyncLocalReview", commands.local_review, { nargs = "?" })
+  vim.api.nvim_create_user_command("PrsyncExport", commands.export, {})
 
   require("prsync.highlight").setup_autocmds()
 end
