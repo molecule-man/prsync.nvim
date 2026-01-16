@@ -13,7 +13,7 @@ function M.run(cmd, args, global_args)
   args = args or {}
   global_args = global_args or {}
 
-  local cmd_parts = { config.options.cli_path, "-yes" }
+  local cmd_parts = { config.options.cli_path, "-non-interactive" }
   for _, arg in ipairs(global_args) do
     table.insert(cmd_parts, tostring(arg))
   end
@@ -59,7 +59,7 @@ function M.run_async(cmd, args, global_args, callback)
   args = args or {}
   global_args = global_args or {}
 
-  local cmd_parts = { config.options.cli_path, "-yes" }
+  local cmd_parts = { config.options.cli_path, "-non-interactive" }
   for _, arg in ipairs(global_args) do
     table.insert(cmd_parts, tostring(arg))
   end
@@ -114,7 +114,7 @@ function M.run_with_stdin(cmd, stdin_content, args, global_args)
   args = args or {}
   global_args = global_args or {}
 
-  local cmd_parts = { config.options.cli_path, "-yes" }
+  local cmd_parts = { config.options.cli_path, "-non-interactive" }
   for _, arg in ipairs(global_args) do
     table.insert(cmd_parts, tostring(arg))
   end
