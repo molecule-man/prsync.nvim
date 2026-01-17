@@ -161,14 +161,14 @@ end
 ---Enable or disable local review mode
 ---@param opts table Command options with args field
 function M.local_review(opts)
-  local base = opts.args
-  if base == "" or base == "off" then
+  local arg = opts.args
+  if arg == "off" then
     highlight.clear_local_review()
     vim.notify("Local review disabled", vim.log.levels.INFO)
     return
   end
-  highlight.set_local_review(base)
-  vim.notify("Local review: " .. base, vim.log.levels.INFO)
+  highlight.set_local_review()
+  vim.notify("Local review enabled", vim.log.levels.INFO)
 end
 
 ---Export review to markdown buffer
@@ -176,10 +176,8 @@ function M.export()
   local args = { "-dry-run", "-format", "md" }
   local global_args = { "-q" }
 
-  local base = highlight.get_local_review_base()
-  if base then
-    table.insert(global_args, "-base")
-    table.insert(global_args, base)
+  if highlight.is_local_review() then
+    table.insert(global_args, "-local")
   end
 
   local md, err = cli.run("comment", args, global_args)

@@ -5,7 +5,7 @@ local M = {}
 M.ns = vim.api.nvim_create_namespace("prsync_comments")
 
 local cached_is_worktree = nil
-local local_review_base = nil
+local local_review_enabled = false
 
 ---Check if current directory is a prsync worktree
 ---@return boolean
@@ -19,12 +19,11 @@ function M.is_prsync_worktree()
   return cached_is_worktree
 end
 
-local function get_draft_async(callback, base)
+local function get_draft_async(callback, is_local)
   local cli = require("prsync.cli")
   local global_args = { "-q" }
-  if base then
-    table.insert(global_args, "-base")
-    table.insert(global_args, base)
+  if is_local then
+    table.insert(global_args, "-local")
   end
   cli.run_async("comment", { "-dry-run", "-format", "json" }, global_args, function(result, err)
     if err then
@@ -42,8 +41,8 @@ end
 local function apply_highlights(bufnr)
   clear_highlights(bufnr)
 
-  local base = local_review_base
-  if not base and not M.is_prsync_worktree() then
+  local is_local = local_review_enabled
+  if not is_local and not M.is_prsync_worktree() then
     return
   end
 
@@ -94,7 +93,7 @@ local function apply_highlights(bufnr)
         break
       end
     end
-  end, base)
+  end, is_local)
 end
 
 function M.setup_autocmds()
@@ -119,17 +118,16 @@ function M.setup_autocmds()
   })
 end
 
----Set local review mode with a base ref
----@param base string Git ref to compare against
-function M.set_local_review(base)
-  local_review_base = base
+---Enable local review mode
+function M.set_local_review()
+  local_review_enabled = true
   local bufnr = vim.api.nvim_get_current_buf()
   apply_highlights(bufnr)
 end
 
----Clear local review mode and all highlights
+---Disable local review mode and clear all highlights
 function M.clear_local_review()
-  local_review_base = nil
+  local_review_enabled = false
   for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_valid(bufnr) then
       vim.api.nvim_buf_clear_namespace(bufnr, M.ns, 0, -1)
@@ -137,10 +135,10 @@ function M.clear_local_review()
   end
 end
 
----Get the current local review base ref
----@return string|nil
-function M.get_local_review_base()
-  return local_review_base
+---Check if local review mode is enabled
+---@return boolean
+function M.is_local_review()
+  return local_review_enabled
 end
 
 return M
