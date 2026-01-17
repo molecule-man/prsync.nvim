@@ -158,18 +158,18 @@ function M.reject()
   review_action("reject")
 end
 
----Enable or disable local review mode
+---Enable or disable offline review mode
 ---@param opts table Command options with args field
-function M.local_review(opts)
+function M.offline_review(opts)
   local arg = opts.args
   if arg == "off" then
-    highlight.clear_local_review()
-    vim.notify("Local review disabled", vim.log.levels.INFO)
+    highlight.clear_offline_review()
+    vim.notify("Offline review disabled", vim.log.levels.INFO)
     return
   end
   local commit = (arg ~= "" and arg ~= "on") and arg or nil
-  highlight.set_local_review(commit)
-  local msg = commit and ("Local review: " .. commit) or "Local review enabled"
+  highlight.set_offline_review(commit)
+  local msg = commit and ("Offline review: " .. commit) or "Offline review enabled"
   vim.notify(msg, vim.log.levels.INFO)
 end
 
@@ -178,9 +178,9 @@ function M.export()
   local args = { "-dry-run", "-format", "md" }
   local global_args = { "-q" }
 
-  if highlight.is_local_review() then
-    table.insert(args, "-local")
-    local commit = highlight.get_local_review_commit()
+  if highlight.is_offline_review() then
+    table.insert(args, "-offline")
+    local commit = highlight.get_offline_review_commit()
     if commit then
       table.insert(args, "-commit")
       table.insert(args, commit)

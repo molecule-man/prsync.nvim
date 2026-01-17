@@ -5,8 +5,8 @@ local M = {}
 M.ns = vim.api.nvim_create_namespace("prsync_comments")
 
 local cached_is_worktree = nil
-local local_review_enabled = false
-local local_review_commit = nil
+local offline_review_enabled = false
+local offline_review_commit = nil
 
 ---Check if current directory is a prsync worktree
 ---@return boolean
@@ -20,12 +20,12 @@ function M.is_prsync_worktree()
   return cached_is_worktree
 end
 
-local function get_draft_async(callback, is_local, commit)
+local function get_draft_async(callback, is_offline, commit)
   local cli = require("prsync.cli")
   local global_args = { "-q" }
   local cmd_args = { "-dry-run", "-format", "json" }
-  if is_local then
-    table.insert(cmd_args, "-local")
+  if is_offline then
+    table.insert(cmd_args, "-offline")
     if commit then
       table.insert(cmd_args, "-commit")
       table.insert(cmd_args, commit)
@@ -47,8 +47,8 @@ end
 local function apply_highlights(bufnr)
   clear_highlights(bufnr)
 
-  local is_local = local_review_enabled
-  if not is_local and not M.is_prsync_worktree() then
+  local is_offline = offline_review_enabled
+  if not is_offline and not M.is_prsync_worktree() then
     return
   end
 
@@ -99,7 +99,7 @@ local function apply_highlights(bufnr)
         break
       end
     end
-  end, is_local, local_review_commit)
+  end, is_offline, offline_review_commit)
 end
 
 function M.setup_autocmds()
@@ -124,19 +124,19 @@ function M.setup_autocmds()
   })
 end
 
----Enable local review mode
+---Enable offline review mode
 ---@param commit string|nil Optional commit to diff against (defaults to HEAD)
-function M.set_local_review(commit)
-  local_review_enabled = true
-  local_review_commit = commit
+function M.set_offline_review(commit)
+  offline_review_enabled = true
+  offline_review_commit = commit
   local bufnr = vim.api.nvim_get_current_buf()
   apply_highlights(bufnr)
 end
 
----Disable local review mode and clear all highlights
-function M.clear_local_review()
-  local_review_enabled = false
-  local_review_commit = nil
+---Disable offline review mode and clear all highlights
+function M.clear_offline_review()
+  offline_review_enabled = false
+  offline_review_commit = nil
   for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_valid(bufnr) then
       vim.api.nvim_buf_clear_namespace(bufnr, M.ns, 0, -1)
@@ -144,16 +144,16 @@ function M.clear_local_review()
   end
 end
 
----Check if local review mode is enabled
+---Check if offline review mode is enabled
 ---@return boolean
-function M.is_local_review()
-  return local_review_enabled
+function M.is_offline_review()
+  return offline_review_enabled
 end
 
----Get the commit to diff against in local review mode
+---Get the commit to diff against in offline review mode
 ---@return string|nil
-function M.get_local_review_commit()
-  return local_review_commit
+function M.get_offline_review_commit()
+  return offline_review_commit
 end
 
 return M
