@@ -167,8 +167,10 @@ function M.local_review(opts)
     vim.notify("Local review disabled", vim.log.levels.INFO)
     return
   end
-  highlight.set_local_review()
-  vim.notify("Local review enabled", vim.log.levels.INFO)
+  local commit = (arg ~= "" and arg ~= "on") and arg or nil
+  highlight.set_local_review(commit)
+  local msg = commit and ("Local review: " .. commit) or "Local review enabled"
+  vim.notify(msg, vim.log.levels.INFO)
 end
 
 ---Export review to markdown buffer
@@ -177,7 +179,12 @@ function M.export()
   local global_args = { "-q" }
 
   if highlight.is_local_review() then
-    table.insert(global_args, "-local")
+    table.insert(args, "-local")
+    local commit = highlight.get_local_review_commit()
+    if commit then
+      table.insert(args, "-commit")
+      table.insert(args, commit)
+    end
   end
 
   local md, err = cli.run("comment", args, global_args)

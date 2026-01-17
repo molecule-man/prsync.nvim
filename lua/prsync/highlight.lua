@@ -6,6 +6,7 @@ M.ns = vim.api.nvim_create_namespace("prsync_comments")
 
 local cached_is_worktree = nil
 local local_review_enabled = false
+local local_review_commit = nil
 
 ---Check if current directory is a prsync worktree
 ---@return boolean
@@ -19,13 +20,18 @@ function M.is_prsync_worktree()
   return cached_is_worktree
 end
 
-local function get_draft_async(callback, is_local)
+local function get_draft_async(callback, is_local, commit)
   local cli = require("prsync.cli")
   local global_args = { "-q" }
+  local cmd_args = { "-dry-run", "-format", "json" }
   if is_local then
-    table.insert(global_args, "-local")
+    table.insert(cmd_args, "-local")
+    if commit then
+      table.insert(cmd_args, "-commit")
+      table.insert(cmd_args, commit)
+    end
   end
-  cli.run_async("comment", { "-dry-run", "-format", "json" }, global_args, function(result, err)
+  cli.run_async("comment", cmd_args, global_args, function(result, err)
     if err then
       callback(nil)
       return
@@ -93,7 +99,7 @@ local function apply_highlights(bufnr)
         break
       end
     end
-  end, is_local)
+  end, is_local, local_review_commit)
 end
 
 function M.setup_autocmds()
@@ -119,8 +125,10 @@ function M.setup_autocmds()
 end
 
 ---Enable local review mode
-function M.set_local_review()
+---@param commit string|nil Optional commit to diff against (defaults to HEAD)
+function M.set_local_review(commit)
   local_review_enabled = true
+  local_review_commit = commit
   local bufnr = vim.api.nvim_get_current_buf()
   apply_highlights(bufnr)
 end
@@ -128,6 +136,7 @@ end
 ---Disable local review mode and clear all highlights
 function M.clear_local_review()
   local_review_enabled = false
+  local_review_commit = nil
   for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_valid(bufnr) then
       vim.api.nvim_buf_clear_namespace(bufnr, M.ns, 0, -1)
@@ -139,6 +148,12 @@ end
 ---@return boolean
 function M.is_local_review()
   return local_review_enabled
+end
+
+---Get the commit to diff against in local review mode
+---@return string|nil
+function M.get_local_review_commit()
+  return local_review_commit
 end
 
 return M
