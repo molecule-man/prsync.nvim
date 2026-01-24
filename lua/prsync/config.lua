@@ -4,6 +4,9 @@ local M = {}
 
 M.defaults = {
   cli_path = "prsync",
+  mappings = {
+    wrap_block = "<leader>pr",
+  },
 }
 
 M.options = {}

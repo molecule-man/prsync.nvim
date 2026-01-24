@@ -105,6 +105,7 @@ end
 function M.setup_autocmds()
   vim.api.nvim_set_hl(0, "PrsyncAnchor", { bg = "#3d3810", default = true })
   vim.api.nvim_set_hl(0, "PrsyncComment", { bg = "#1a3d10", default = true })
+  vim.api.nvim_set_hl(0, "PrsyncMarker", { fg = "#666666", default = true })
 
   local augroup = vim.api.nvim_create_augroup("PrsyncHighlight", { clear = true })
 
@@ -131,6 +132,8 @@ function M.set_offline_review(commit)
   offline_review_commit = commit
   local bufnr = vim.api.nvim_get_current_buf()
   apply_highlights(bufnr)
+  -- Set up block mappings for all buffers
+  require("prsync.block").setup_all_buffer_mappings()
 end
 
 ---Disable offline review mode and clear all highlights
@@ -141,6 +144,10 @@ function M.clear_offline_review()
     if vim.api.nvim_buf_is_valid(bufnr) then
       vim.api.nvim_buf_clear_namespace(bufnr, M.ns, 0, -1)
     end
+  end
+  -- Remove block mappings from all buffers (unless in a prsync worktree)
+  if not M.is_prsync_worktree() then
+    require("prsync.block").remove_all_buffer_mappings()
   end
 end
 

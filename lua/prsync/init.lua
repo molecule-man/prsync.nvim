@@ -14,6 +14,7 @@ function M.setup(opts)
   vim.api.nvim_create_user_command("PrsyncExport", commands.export, {})
 
   require("prsync.highlight").setup_autocmds()
+  require("prsync.block").setup_mappings()
 end
 
 return M
