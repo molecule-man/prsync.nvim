@@ -75,8 +75,8 @@ local function apply_highlights(bufnr)
           end
 
           -- Highlight anchor lines (yellowish)
-          if comment.anchor_start and comment.anchor_end then
-            for line = comment.anchor_start, comment.anchor_end do
+          if comment.worktree_start and comment.worktree_end then
+            for line = comment.worktree_start, comment.worktree_end do
               pcall(vim.api.nvim_buf_set_extmark, bufnr, M.ns, line - 1, 0, {
                 line_hl_group = "PrsyncAnchor",
                 hl_eol = true,
